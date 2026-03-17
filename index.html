@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- SECTION: Metadata -->
+  <meta charset="UTF-8">
+  <title>Invoicing System Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- SECTION: Fonts & Styles -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="style.css" rel="stylesheet">
+</head>
+<body>
+  <div class="app-shell gradient-mesh">
+    <!-- Decorative background shapes -->
+    <div class="floating-shape shape-1" aria-hidden="true"></div>
+    <div class="floating-shape shape-2" aria-hidden="true"></div>
+
+    <!-- SECTION: Sidebar Navigation -->
+    <aside class="sidebar shadow-soft" aria-label="Invoicing navigation">
+      <div class="sidebar__brand">
+        <div class="brand-mark gradient-border">
+          <span class="brand-mark__dot"></span>
+        </div>
+        <div class="brand-text">
+          <span class="brand-text__title">LedgerFlow</span>
+          <span class="brand-text__subtitle">Invoicing Workspace</span>
+        </div>
+      </div>
+
+      <nav class="sidebar__nav">
+        <button class="nav-item nav-item--active" data-section="clients">
+          <span class="nav-item__icon">👥</span>
+          <span class="nav-item__label">Clients</span>
+        </button>
+        <button class="nav-item" data-section="products">
+          <span class="nav-item__icon">📦</span>
+          <span class="nav-item__label">Products</span>
+        </button>
+        <button class="nav-item" data-section="invoices">
+          <span class="nav-item__icon">📄</span>
+          <span class="nav-item__label">Invoices</span>
+        </button>
+        <button class="nav-item" data-section="recurring">
+          <span class="nav-item__icon">🔁</span>
+          <span class="nav-item__label">Recurring</span>
+        </button>
+        <button class="nav-item" data-section="payments">
+          <span class="nav-item__icon">💳</span>
+          <span class="nav-item__label">Payments</span>
+        </button>
+        <button class="nav-item" data-section="reports">
+          <span class="nav-item__icon">📊</span>
+          <span class="nav-item__label">Reports</span>
+        </button>
+      </nav>
+
+      <!-- SECTION: Google Drive Auth Placeholder -->
+      <section class="sidebar__drive" aria-label="Google Drive status">
+        <h2 class="sidebar__drive-title">Storage</h2>
+        <p class="sidebar__drive-text">Connect Google Drive to sync invoices, clients, and reports.</p>
+        <button id="drive-connect" class="btn btn--primary btn--full">
+          <span class="btn__icon">☁️</span>
+          <span>Connect Google Drive</span>
+        </button>
+        <div class="drive-status" id="drive-status" aria-live="polite">
+          <span class="drive-status__dot drive-status__dot--disconnected"></span>
+          <span class="drive-status__label">Not connected</span>
+        </div>
+        <p class="sidebar__drive-note">This demo includes hooks for Google Drive integration. You will need to add your own API keys and OAuth flow.</p>
+      </section>
+    </aside>
+
+    <!-- SECTION: Main Content -->
+    <main class="main">
+      <!-- SECTION: Header -->
+      <header class="main-header">
+        <div class="main-header__titles">
+          <h1>Invoicing System</h1>
+          <p class="main-header__subtitle">Manage clients, products, invoices, payments, and insights in one focused workspace.</p>
+        </div>
+        <div class="main-header__meta">
+          <div class="meta-pill">
+            <span class="meta-pill__label">Billing period</span>
+            <span class="meta-pill__value" id="current-period">Mar 2025</span>
+          </div>
+          <button class="btn btn--ghost" id="new-invoice-quick">
+            <span class="btn__icon">➕</span>
+            <span>New Invoice</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- SECTION: Overview Cards -->
+      <section class="overview" aria-label="Key metrics">
+        <article class="kpi-card shadow-soft">
+          <header class="kpi-card__header">
+            <span class="kpi-card__label">Outstanding</span>
+            <span class="kpi-card__tag kpi-card__tag--warning">Open invoices</span>
+          </header>
+          <p class="kpi-card__value" id="kpi-outstanding">$0.00</p>
+          <p class="kpi-card__hint">Due across all clients</p>
+        </article>
+
+        <article class="kpi-card shadow-soft">
+          <header class="kpi-card__header">
+            <span class="kpi-card__label">Paid this month</span>
+            <span class="kpi-card__tag kpi-card__tag--success">Cash in</span>
+          </header>
+          <p class="kpi-card__value" id="kpi-paid">$0.00</p>
+          <p class="kpi-card__hint">Captured payments</p>
+        </article>
+
+        <article class="kpi-card shadow-soft">
+          <header class="kpi-card__header">
+            <span class="kpi-card__label">Active recurring</span>
+            <span class="kpi-card__tag kpi-card__tag--info">Subscriptions</span>
+          </header>
+          <p class="kpi-card__value" id="kpi-recurring">0</p>
+          <p class="kpi-card__hint">Auto-generated invoices</p>
+        </article>
+      </section>
+
+      <!-- SECTION: Content Panels / Workspace -->
+      <section class="workspace">
+        <!-- Clients Panel -->
+        <section class="panel panel--active" id="panel-clients" aria-labelledby="panel-clients-title">
+          <header class="panel__header">
+            <div>
+              <h2 id="panel-clients-title">Clients</h2>
+              <p class="panel__subtitle">Add and manage who you bill.</p>
+            </div>
+            <button class="btn btn--primary" id="add-client-btn">
+              <span class="btn__icon">➕</span>
+              <span>New Client</span>
+            </button>
+          </header>
+
+          <div class="panel__body panel__body--split">
+            <form class="form" id="client-form" autocomplete="off">
+              <h3 class="form__title">Client details</h3>
+              <div class="form__grid">
+                <div class="form__field">
+                  <label for="client-name">Client name</label>
+                  <input id="client-name" name="clientName" type="text" required>
+                </div>
+                <div class="form__field">
+                  <label for="client-email">Email</label>
+                  <input id="client-email" name="clientEmail" type="email" required>
+                </div>
+                <div class="form__field">
+                  <label for="client-company">Company</label>
+                  <input id="client-company" name="clientCompany" type="text">
+                </div>
+                <div class="form__field">
+                  <label for="client-phone">Phone</label>
+                  <input id="client-phone" name="clientPhone" type="tel">
+                </div>
+                <div class="form__field form__field--full">
+                  <label for="client-notes">Notes</label>
+                  <textarea id="client-notes" name="clientNotes" rows="3"></textarea>
+                </div>
+              </div>
+              <div class="form__actions">
+                <button type="submit" class="btn btn--primary">Save client</button>
+                <button type="reset" class="btn btn--ghost">Clear</button>
+              </div>
+            </form>
+
+            <div class="list" aria-label="Saved clients">
+              <div class="list__header">
+                <h3 class="list__title">Client list</h3>
+                <input class="list__search" id="client-search" type="search" placeholder="Search clients">
+              </div>
+              <ul class="list__items" id="client-list">
+                <!-- Client rows rendered here -->
+              </ul>
+              <p class="list__empty" id="client-empty">No clients yet. Add your first client using the form.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Products Panel -->
+        <section class="panel" id="panel-products" aria-labelledby="panel-products-title">
+          <header class="panel__header">
+            <div>
+              <h2 id="panel-products-title">Products</h2>
+              <p class="panel__subtitle">Define what you sell or bill for.</p>
+            </div>
+            <button class="btn btn--primary" id="add-product-btn">
+              <span class="btn__icon">➕</span>
+              <span>New Product</span>
+            </button>
+          </header>
+
+          <div class="panel__body panel__body--split">
+            <form class="form" id="product-form" autocomplete="off">
+              <h3 class="form__title">Product / service</h3>
+              <div class="form__grid">
+                <div class="form__field">
+                  <label for="product-name">Name</label>
+                  <input id="product-name" name="productName" type="text" required>
+                </div>
+                <div class="form__field">
+                  <label for="product-sku">SKU / Code</label>
+                  <input id="product-sku" name="productSku" type="text">
+                </div>
+                <div class="form__field">
+                  <label for="product-price">Unit price</label>
+                  <input id="product-price" name="productPrice" type="number" min="0" step="0.01" required>
+                </div>
+                <div class="form__field">
+                  <label for="product-tax">Tax rate (%)</label>
+                  <input id="product-tax" name="productTax" type="number" min="0" step="0.01" value="0">
+                </div>
+                <div class="form__field form__field--full">
+                  <label for="product-description">Description</label>
+                  <textarea id="product-description" name="productDescription" rows="3"></textarea>
+                </div>
+              </div>
+              <div class="form__actions">
+                <button type="submit" class="btn btn--primary">Save product</button>
+                <button type="reset" class="btn btn--ghost">Clear</button>
+              </div>
+            </form>
+
+            <div class="list" aria-label="Saved products">
+              <div class="list__header">
+                <h3 class="list__title">Product catalog</h3>
+                <input class="list__search" id="product-search" type="search" placeholder="Search products">
+              </div>
+              <ul class="list__items" id="product-list"></ul>
+              <p class="list__empty" id="product-empty">No products yet. Add your first item.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Invoices Panel -->
+        <section class="panel" id="panel-invoices" aria-labelledby="panel-invoices-title">
+          <header class="panel__header">
+            <div>
+              <h2 id="panel-invoices-title">Invoices</h2>
+              <p class="panel__subtitle">Create and track one-off invoices.</p>
+            </div>
+            <button class="btn btn--primary" id="add-invoice-btn">
+              <span class="btn__icon">➕</span>
+              <span>New Invoice</span>
+            </button>
+          </header>
+
+          <div class="panel__body panel__body--stacked">
+            <form class="form" id="invoice-form" autocomplete="off">
+              <h3 class="form__title">Invoice details</h3>
+
+              <div class="form__grid form__grid--3col">
+                <div class="form__field">
+                  <label for="invoice-client">Client</label>
+                  <select id="invoice-client" name="invoiceClient" required></select>
+                </div>
+                <div class="form__field">
+                  <label for="invoice-number">Invoice #</label>
+                  <input id="invoice-number" name="invoiceNumber" type="text" placeholder="INV-0001" required>
+                </div>
+                <div class="form__field">
+                  <label for="invoice-date">Issue date</label>
+                  <input id="invoice-date" name="invoiceDate" type="date" required>
+                </div>
+                <div class="form__field">
+                  <label for="invoice-due">Due date</label>
+                  <input id="invoice-due" name="invoiceDue" type="date" required>
+                </div>
+                <div class="form__field">
+                  <label for="invoice-status">Status</label>
+                  <select id="invoice-status" name="invoiceStatus">
+                    <option value="draft">Draft</option>
+                    <option value="sent">Sent</option>
+                    <option value="paid">Paid</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Invoice line items -->
+              <div class="invoice-items" aria-label="Invoice line items">
+                <div class="invoice-items__header">
+                  <h3 class="form__subtitle">Line items</h3>
+                  <button type="button" class="btn btn--ghost" id="add-line-item">
+                    <span class="btn__icon">➕</span>
+                    <span>Add line</span>
+                  </button>
+                </div>
+                <div class="invoice-items__table" id="invoice-items-container">
+                  <!-- Dynamic line item rows -->
+                </div>
+              </div>
+
+              <div class="invoice-summary" aria-label="Invoice totals">
+                <div class="invoice-summary__row">
+                  <span>Subtotal</span>
+                  <span id="invoice-subtotal">$0.00</span>
+                </div>
+                <div class="invoice-summary__row">
+                  <span>Tax</span>
+                  <span id="invoice-tax">$0.00</span>
+                </div>
+                <div class="invoice-summary__row invoice-summary__row--total">
+                  <span>Total</span>
+                  <span id="invoice-total">$0.00</span>
+                </div>
+              </div>
+
+              <div class="form__actions">
+                <button type="submit" class="btn btn--primary">Save invoice</button>
+                <button type="reset" class="btn btn--ghost" id="invoice-reset">Clear</button>
+              </div>
+            </form>
+
+            <div class="list" aria-label="Invoice list">
+              <div class="list__header">
+                <h3 class="list__title">Invoices</h3>
+                <input class="list__search" id="invoice-search" type="search" placeholder="Search invoices">
+              </div>
+              <ul class="list__items" id="invoice-list"></ul>
+              <p class="list__empty" id="invoice-empty">No invoices yet. Create your first invoice above.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Recurring Invoices Panel -->
+        <section class="panel" id="panel-recurring" aria-labelledby="panel-recurring-title">
+          <header class="panel__header">
+            <div>
+              <h2 id="panel-recurring-title">Recurring invoices</h2>
+              <p class="panel__subtitle">Set up subscriptions and automatic billing schedules.</p>
+            </div>
+            <button class="btn btn--primary" id="add-recurring-btn">
+              <span class="btn__icon">➕</span>
+              <span>New schedule</span>
+            </button>
+          </header>
+
+          <div class="panel__body panel__body--split">
+            <form class="form" id="recurring-form" autocomplete="off">
+              <h3 class="form__title">Schedule</h3>
+              <div class="form__grid">
+                <div class="form__field">
+                  <label for="recurring-client">Client</label>
+                  <select id="recurring-client" name="recurringClient" required></select>
+                </div>
+                <div class="form__field">
+                  <label for="recurring-interval">Frequency</label>
+                  <select id="recurring-interval" name="recurringInterval">
+                    <option value="monthly">Monthly</option>
+                    <option value="quarterly">Quarterly</option>
+                    <option value="yearly">Yearly</option>
+                  </select>
+                </div>
+                <div class="form__field">
+                  <label for="recurring-start">Start date</label>
+                  <input id="recurring-start" name="recurringStart" type="date" required>
+                </div>
+                <div class="form__field">
+                  <label for="recurring-amount">Amount</label>
+                  <input id="recurring-amount" name="recurringAmount" type="number" min="0" step="0.01" required>
+                </div>
+                <div class="form__field form__field--full">
+                  <label for="recurring-notes">Internal note</label>
+                  <textarea id="recurring-notes" name="recurringNotes" rows="2"></textarea>
+                </div>
+              </div>
+              <div class="form__actions">
+                <button type="submit" class="btn btn--primary">Save schedule</button>
+                <button type="reset" class="btn btn--ghost">Clear</button>
+              </div>
+            </form>
+
+            <div class="list" aria-label="Recurring schedules">
+              <div class="list__header">
+                <h3 class="list__title">Active schedules</h3>
+              </div>
+              <ul class="list__items" id="recurring-list"></ul>
+              <p class="list__empty" id="recurring-empty">No recurring invoices yet.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Payments Panel -->
+        <section class="panel" id="panel-payments" aria-labelledby="panel-payments-title">
+          <header class="panel__header">
+            <div>
+              <h2 id="panel-payments-title">Payments</h2>
+              <p class="panel__subtitle">Record payments against invoices.</p>
+            </div>
+            <button class="btn btn--primary" id="add-payment-btn">
+              <span class="btn__icon">➕</span>
+              <span>New payment</span>
+            </button>
+          </header>
+
+          <div class="panel__body panel__body--split">
+            <form class="form" id="payment-form" autocomplete="off">
+              <h3 class="form__title">Payment details</h3>
+              <div class="form__grid">
+                <div class="form__field">
+                  <label for="payment-invoice">Invoice</label>
+                  <select id="payment-invoice" name="paymentInvoice" required></select>
+                </div>
+                <div class="form__field">
+                  <label for="payment-date">Payment date</label>
+                  <input id="payment-date" name="paymentDate" type="date" required>
+                </div>
+                <div class="form__field">
+                  <label for="payment-amount">Amount</label>
+                  <input id="payment-amount" name="paymentAmount" type="number" min="0" step="0.01" required>
+                </div>
+                <div class="form__field">
+                  <label for="payment-method">Method</label>
+                  <select id="payment-method" name="paymentMethod">
+                    <option value="bank">Bank transfer</option>
+                    <option value="card">Card</option>
+                    <option value="cash">Cash</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div class="form__field form__field--full">
+                  <label for="payment-notes">Notes</label>
+                  <textarea id="payment-notes" name="paymentNotes" rows="2"></textarea>
+                </div>
+              </div>
+              <div class="form__actions">
+                <button type="submit" class="btn btn--primary">Record payment</button>
+                <button type="reset" class="btn btn--ghost">Clear</button>
+              </div>
+            </form>
+
+            <div class="list" aria-label="Payments list">
+              <div class="list__header">
+                <h3 class="list__title">Payment history</h3>
+              </div>
+              <ul class="list__items" id="payment-list"></ul>
+              <p class="list__empty" id="payment-empty">No payments recorded yet.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Reports Panel -->
+        <section class="panel" id="panel-reports" aria-labelledby="panel-reports-title">
+          <header class="panel__header">
+            <div>
+              <h2 id="panel-reports-title">Reports & statements</h2>
+              <p class="panel__subtitle">High-level view of your invoicing activity.</p>
+            </div>
+          </header>
+
+          <div class="panel__body panel__body--stacked">
+            <section class="reports-grid">
+              <article class="report-card shadow-soft">
+                <header class="report-card__header">
+                  <h3>Invoice breakdown</h3>
+                  <p>Status summary across the current period.</p>
+                </header>
+                <div class="chart-container">
+                  <canvas id="invoice-status-chart" aria-label="Invoice status chart" role="img"></canvas>
+                </div>
+              </article>
+
+              <article class="report-card shadow-soft">
+                <header class="report-card__header">
+                  <h3>Client statement preview</h3>
+                  <p>Select a client to see open and paid invoices.</p>
+                </header>
+                <div class="form__field">
+                  <label for="statement-client">Client</label>
+                  <select id="statement-client"></select>
+                </div>
+                <div class="statement" id="statement-preview">
+                  <p class="statement__empty">Choose a client to preview their statement.</p>
+                </div>
+              </article>
+            </section>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <!-- SECTION: Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
